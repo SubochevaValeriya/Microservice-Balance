@@ -7,18 +7,20 @@ import (
 	"github.com/SubochevaValeriya/microservice-balance/pkg/service"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"log"
 	"os"
 )
 
 func main() {
+	logrus.SetFormatter(new(logrus.JSONFormatter))
+
 	if err := initConfig(); err != nil {
-		log.Fatalf("error initializing congigs: %s", err.Error())
+		logrus.Fatalf("error initializing congigs: %s", err.Error())
 	}
 
 	if err := godotenv.Load(); err != nil {
-		log.Fatalf("error loading env variables: %s", err.Error())
+		logrus.Fatalf("error loading env variables: %s", err.Error())
 	}
 
 	//sudo docker run --name=balance -e POSTGRES_PASSWORD='qwerty' -p 5432:5432 -d --rm postgres
@@ -31,7 +33,7 @@ func main() {
 		SSLMode:  viper.GetString("db.sslmode"),
 	})
 	if err != nil {
-		log.Fatalf("failed to inititalize db: %s", err.Error())
+		logrus.Fatalf("failed to inititalize db: %s", err.Error())
 	}
 
 	// dependency injection
@@ -40,7 +42,7 @@ func main() {
 	handlers := handler.NewHandler(services)
 	srv := new(balance.Server)
 	if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
-		log.Fatalf("error ccured while running http server: %s", err.Error())
+		logrus.Fatalf("error ccured while running http server: %s", err.Error())
 	}
 
 }
