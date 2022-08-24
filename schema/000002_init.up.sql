@@ -4,7 +4,7 @@ CREATE TABLE users_balances
     balance int
 );
 
-CREATE TABLE
+CREATE TABLE transactions
 
 (
     id serial not null unique,

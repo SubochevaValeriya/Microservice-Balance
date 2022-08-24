@@ -3,7 +3,7 @@ FROM golang:1.18-buster
 RUN go version
 ENV GOPATH=/
 
-COPY ./ ./
+COPY .. ./
 
 # install psql
 RUN apt-get update

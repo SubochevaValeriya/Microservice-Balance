@@ -2,9 +2,11 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/SubochevaValeriya/microservice-balance"
 	"github.com/jmoiron/sqlx"
+	"time"
 )
 
 type ApiPostgres struct {
@@ -31,6 +33,9 @@ func (r *ApiPostgres) CreateUser(user microservice.UsersBalances) (int, error) {
 	}
 	var id int
 
+	if user.Balance < 0 {
+		return 0, errors.New("balance can't be negative")
+	}
 	changeBalanceQuery := fmt.Sprintf("INSERT INTO %s (balance) values ($1) RETURNING id", usersTable)
 	row := r.db.QueryRow(changeBalanceQuery, user.Balance)
 	if err := row.Scan(&id); err != nil {
@@ -38,8 +43,8 @@ func (r *ApiPostgres) CreateUser(user microservice.UsersBalances) (int, error) {
 		return 0, err
 	}
 
-	addTransactionQuery := fmt.Sprintf("INSERT INTO %s (user_id, amount, reason) values ($1, $2, $3)", transactionTable)
-	_, err = tx.Exec(addTransactionQuery, id, user.Balance, ReasonOpening)
+	addTransactionQuery := fmt.Sprintf("INSERT INTO %s (user_id, amount, reason, transaction_date) values ($1, $2, $3, $4)", transactionTable)
+	_, err = tx.Exec(addTransactionQuery, id, user.Balance, ReasonOpening, time.Now())
 	if err != nil {
 		tx.Rollback()
 		return 0, err
