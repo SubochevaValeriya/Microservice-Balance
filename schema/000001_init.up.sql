@@ -4,7 +4,8 @@ CREATE TABLE users_balances
     balance int
 );
 
-CREATE TABLE transactions
+CREATE TABLE
+
 (
     id serial not null unique,
     user_id int references users_balances(id) not null,

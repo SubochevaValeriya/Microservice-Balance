@@ -1,0 +1,56 @@
+package repository
+
+import (
+	"database/sql"
+	"fmt"
+	"github.com/SubochevaValeriya/microservice-balance"
+	"github.com/jmoiron/sqlx"
+)
+
+type ApiPostgres struct {
+	db *sqlx.DB
+}
+
+func NewApiPostgres(db *sqlx.DB) *ApiPostgres {
+	return &ApiPostgres{db: db}
+}
+
+func (r *ApiPostgres) CreateUser(user microservice.transactionTable) (int, error) {
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return 0, err
+	}
+	var id int
+
+	changeBalanceQuery := fmt.Sprintf("INSERT INTO %s (balance) values ($1) RETURNING id", usersTable)
+	row := r.db.QueryRow(changeBalanceQuery, user.Balance)
+	if err := row.Scan(&id); err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	addTransactionQuery := fmt.Sprintf("INSERT INTO %s (user_id, amount, reason) values ($1, $2)", transactionTable)
+	_, err := tx.Exec(addTransactionQuery, id)
+
+	return id, nil
+}
+
+func (r *ApiPostgres) GetAllUsersBalances(user microservice.UsersBalances) (*sql.Row, error) {
+	query := fmt.Sprintf("SELECT * FROM %s", usersTable)
+	row := r.db.QueryRow(query)
+	//if err := row.Scan(&id); err != nil {
+	//	return 0, err
+	//}
+
+	return row, nil
+}
+
+func (r *ApiPostgres) GetBalanceById(user microservice.UsersBalances) (*sql.Row, error) {
+	query := fmt.Sprintf("SELECT (balance) FROM %s WHERE id = $1", usersTable)
+	row := r.db.QueryRow(query, user.Id)
+	//if err := row.Scan(&id); err != nil {
+	//	return 0, err
+	//}
+
+	return row, nil
+}

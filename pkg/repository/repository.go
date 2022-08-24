@@ -1,8 +1,15 @@
 package repository
 
-import "github.com/jmoiron/sqlx"
+import (
+	"database/sql"
+	"github.com/SubochevaValeriya/microservice-balance"
+	"github.com/jmoiron/sqlx"
+)
 
 type Balance interface {
+	CreateUser(user microservice.UsersBalances) (int, error)
+	GetAllUsersBalances(user microservice.UsersBalances) (*sql.Row, error)
+	GetBalanceById(user microservice.UsersBalances) (*sql.Row, error)
 }
 
 type Repository struct {
@@ -10,5 +17,5 @@ type Repository struct {
 }
 
 func NewRepository(db *sqlx.DB) *Repository {
-	return &Repository{}
+	return &Repository{NewApiPostgres(db)}
 }
