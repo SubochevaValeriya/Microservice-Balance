@@ -15,7 +15,16 @@ func NewApiPostgres(db *sqlx.DB) *ApiPostgres {
 	return &ApiPostgres{db: db}
 }
 
-func (r *ApiPostgres) CreateUser(user microservice.transactionTable) (int, error) {
+const (
+	ReasonOpening       = "Opening"
+	ReasonReplenishment = "Replenishment"
+	ReasonWithdrawal    = "Withdrawal"
+	ReasonTransfer      = "Transfer"
+)
+
+func (r *ApiPostgres) CreateUser(user microservice.UsersBalances) (int, error) {
+	// пользователь мне даёт balance и всё (в будущем валюту), соотв я по умолчанию проставляю
+	// ризон и амаунт, мне даже это не нужно от него
 	tx, err := r.db.Beginx()
 	if err != nil {
 		return 0, err
@@ -29,10 +38,14 @@ func (r *ApiPostgres) CreateUser(user microservice.transactionTable) (int, error
 		return 0, err
 	}
 
-	addTransactionQuery := fmt.Sprintf("INSERT INTO %s (user_id, amount, reason) values ($1, $2)", transactionTable)
-	_, err := tx.Exec(addTransactionQuery, id)
+	addTransactionQuery := fmt.Sprintf("INSERT INTO %s (user_id, amount, reason) values ($1, $2, $3)", transactionTable)
+	_, err = tx.Exec(addTransactionQuery, id, user.Balance, ReasonOpening)
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
 
-	return id, nil
+	return id, tx.Commit()
 }
 
 func (r *ApiPostgres) GetAllUsersBalances(user microservice.UsersBalances) (*sql.Row, error) {
