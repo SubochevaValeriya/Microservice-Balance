@@ -52,6 +52,7 @@ func (h *Handler) changeUsersBalances(c *gin.Context) {
 
 func (h *Handler) deleteAllUsersBalances(c *gin.Context) {
 	// DELETE
+
 }
 
 func (h *Handler) getBalanceByID(c *gin.Context) {
@@ -81,6 +82,20 @@ func (h *Handler) changeBalanceByID(c *gin.Context) {
 
 func (h *Handler) deleteByID(c *gin.Context) {
 	//DELETE
+	userId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
+	}
+
+	err = h.services.Balance.DeleteUserById(userId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, statusResponse{
+		Status: "ok",
+	})
 }
 
 //func getUserId(c *gin.Context) (int, error) {

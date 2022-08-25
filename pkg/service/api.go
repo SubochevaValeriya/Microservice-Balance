@@ -27,3 +27,8 @@ func (s *ApiService) GetBalanceById(userId int) (microservice.UsersBalances, err
 
 	return s.repo.GetBalanceById(userId)
 }
+
+func (s *ApiService) DeleteUserById(userId int) error {
+
+	return s.repo.DeleteUserById(userId)
+}

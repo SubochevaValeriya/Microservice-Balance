@@ -63,11 +63,33 @@ func (r *ApiPostgres) GetAllUsersBalances() ([]microservice.UsersBalances, error
 
 func (r *ApiPostgres) GetBalanceById(userId int) (microservice.UsersBalances, error) {
 	var list microservice.UsersBalances
-	query := fmt.Sprintf("SELECT (balance) FROM %s WHERE id = $1", usersTable)
+	query := fmt.Sprintf("SELECT * FROM %s WHERE id = $1", usersTable)
 	err := r.db.Get(&list, query, userId)
 	//if err := row.Scan(&id); err != nil {
 	//	return 0, err
 	//}
 
 	return list, err
+}
+
+func (r *ApiPostgres) DeleteUserById(userId int) error {
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	deleteTransactionsQuery := fmt.Sprintf("DELETE FROM %s WHERE id = $1", transactionTable)
+	if _, err := r.db.Exec(deleteTransactionsQuery, userId); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	deleteBalanceQuery := fmt.Sprintf("DELETE FROM %s WHERE id = $1", usersTable)
+	_, err = tx.Exec(deleteBalanceQuery, userId)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }

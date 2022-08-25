@@ -9,6 +9,7 @@ type Balance interface {
 	CreateUser(user microservice.UsersBalances) (int, error)
 	GetAllUsersBalances() ([]microservice.UsersBalances, error)
 	GetBalanceById(userId int) (microservice.UsersBalances, error)
+	DeleteUserById(userId int) error
 }
 
 type Service struct {
