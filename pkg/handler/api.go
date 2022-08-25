@@ -4,6 +4,7 @@ import (
 	"github.com/SubochevaValeriya/microservice-balance"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 func (h *Handler) createUser(c *gin.Context) {
@@ -26,23 +27,21 @@ func (h *Handler) createUser(c *gin.Context) {
 	})
 }
 
+type getAllUsersBalancesResponse struct {
+	Data []microservice.UsersBalances `json:"data"`
+}
+
 func (h *Handler) getAllUsersBalances(c *gin.Context) {
 	// SELECT * FROM UsersBalances
-	var input microservice.UsersBalances
 
-	if err := c.BindJSON(&input); err != nil {
-		newErrorResponse(c, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	id, err := h.services.Balance.CreateUser(input)
+	usersBalances, err := h.services.Balance.GetAllUsersBalances()
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, map[string]int{
-		"id": id,
+	c.JSON(http.StatusOK, getAllUsersBalancesResponse{
+		Data: usersBalances,
 	})
 }
 
@@ -57,22 +56,23 @@ func (h *Handler) deleteAllUsersBalances(c *gin.Context) {
 
 func (h *Handler) getBalanceByID(c *gin.Context) {
 	// SELECT
-	var input microservice.UsersBalances
+	//userId, err := getUserId(c)
+	//if err != nil {
+	//	return
+	//}
 
-	if err := c.BindJSON(&input); err != nil {
-		newErrorResponse(c, http.StatusBadRequest, err.Error())
-		return
+	userId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
 	}
 
-	id, err := h.services.Balance.CreateUser(input)
+	list, err := h.services.Balance.GetBalanceById(userId)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, map[string]int{
-		"id": id,
-	})
+	c.JSON(http.StatusOK, list)
 }
 
 func (h *Handler) changeBalanceByID(c *gin.Context) {
@@ -82,3 +82,17 @@ func (h *Handler) changeBalanceByID(c *gin.Context) {
 func (h *Handler) deleteByID(c *gin.Context) {
 	//DELETE
 }
+
+//func getUserId(c *gin.Context) (int, error) {
+//	id, ok := c.Get("userId")
+//	if !ok {
+//		return 0, errors.New("user id not found")
+//	}
+//
+//	idInt, ok := id.(int)
+//	if !ok {
+//		return 0, errors.New("user id is of invalid type")
+//	}
+//
+//	return idInt, nil
+//}

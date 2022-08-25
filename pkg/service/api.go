@@ -1,7 +1,6 @@
 package service
 
 import (
-	"database/sql"
 	"github.com/SubochevaValeriya/microservice-balance"
 	"github.com/SubochevaValeriya/microservice-balance/pkg/repository"
 )
@@ -19,12 +18,12 @@ func (s *ApiService) CreateUser(user microservice.UsersBalances) (int, error) {
 	return s.repo.CreateUser(user)
 }
 
-func (s *ApiService) GetAllUsersBalances(user microservice.UsersBalances) (*sql.Row, error) {
+func (s *ApiService) GetAllUsersBalances() ([]microservice.UsersBalances, error) {
 
-	return s.repo.GetAllUsersBalances(user)
+	return s.repo.GetAllUsersBalances()
 }
 
-func (s *ApiService) GetBalanceById(user microservice.UsersBalances) (*sql.Row, error) {
+func (s *ApiService) GetBalanceById(userId int) (microservice.UsersBalances, error) {
 
-	return s.repo.GetAllUsersBalances(user)
+	return s.repo.GetBalanceById(userId)
 }

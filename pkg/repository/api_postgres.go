@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/SubochevaValeriya/microservice-balance"
@@ -53,22 +52,22 @@ func (r *ApiPostgres) CreateUser(user microservice.UsersBalances) (int, error) {
 	return id, tx.Commit()
 }
 
-func (r *ApiPostgres) GetAllUsersBalances(user microservice.UsersBalances) (*sql.Row, error) {
-	query := fmt.Sprintf("SELECT * FROM %s", usersTable)
-	row := r.db.QueryRow(query)
-	//if err := row.Scan(&id); err != nil {
-	//	return 0, err
-	//}
+func (r *ApiPostgres) GetAllUsersBalances() ([]microservice.UsersBalances, error) {
+	var usersBalances []microservice.UsersBalances
 
-	return row, nil
+	query := fmt.Sprintf("SELECT * FROM %s", usersTable)
+	err := r.db.Select(&usersBalances, query)
+
+	return usersBalances, err
 }
 
-func (r *ApiPostgres) GetBalanceById(user microservice.UsersBalances) (*sql.Row, error) {
+func (r *ApiPostgres) GetBalanceById(userId int) (microservice.UsersBalances, error) {
+	var list microservice.UsersBalances
 	query := fmt.Sprintf("SELECT (balance) FROM %s WHERE id = $1", usersTable)
-	row := r.db.QueryRow(query, user.Id)
+	err := r.db.Get(&list, query, userId)
 	//if err := row.Scan(&id); err != nil {
 	//	return 0, err
 	//}
 
-	return row, nil
+	return list, err
 }

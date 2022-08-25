@@ -18,11 +18,11 @@ func (h *Handler) InitRoutes() *gin.Engine {
 
 	api := router.Group("/api")
 	{
-		api.POST("/", h.createUser)
-		api.GET("/", h.getAllUsersBalances)
+		api.POST("/", h.createUser)         //done
+		api.GET("/", h.getAllUsersBalances) //done
 		api.PUT("/", h.changeUsersBalances)
 		api.DELETE("/", h.deleteAllUsersBalances)
-		api.GET("/:id", h.getBalanceByID)
+		api.GET("/:id", h.getBalanceByID) //done
 		api.PUT("/:id", h.changeBalanceByID)
 		api.DELETE("/:id", h.deleteByID)
 	}

@@ -1,15 +1,14 @@
 package service
 
 import (
-	"database/sql"
 	"github.com/SubochevaValeriya/microservice-balance"
 	"github.com/SubochevaValeriya/microservice-balance/pkg/repository"
 )
 
 type Balance interface {
 	CreateUser(user microservice.UsersBalances) (int, error)
-	GetAllUsersBalances(user microservice.UsersBalances) (*sql.Row, error)
-	GetBalanceById(user microservice.UsersBalances) (*sql.Row, error)
+	GetAllUsersBalances() ([]microservice.UsersBalances, error)
+	GetBalanceById(userId int) (microservice.UsersBalances, error)
 }
 
 type Service struct {
