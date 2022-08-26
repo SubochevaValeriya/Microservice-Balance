@@ -32,3 +32,13 @@ func (s *ApiService) DeleteUserById(userId int) error {
 
 	return s.repo.DeleteUserById(userId)
 }
+
+func (s *ApiService) DeleteAllUsersBalances() error {
+
+	return s.repo.DeleteAllUsersBalances()
+}
+
+func (s *ApiService) ChangeBalanceById(userId int, transaction microservice.Transactions) (int, error) {
+
+	return s.repo.ChangeBalanceById(userId, transaction)
+}

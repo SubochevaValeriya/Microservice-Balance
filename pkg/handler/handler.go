@@ -24,7 +24,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		api.DELETE("/", h.deleteAllUsersBalances)
 		api.GET("/:id", h.getBalanceByID) //done
 		api.PUT("/:id", h.changeBalanceByID)
-		api.DELETE("/:id", h.deleteByID) //done
+		api.DELETE("/:id", h.deleteUsersByID) //done
 	}
 
 	// но сейчас у меня всё по таблице balance, а можно ещё добавить по транзакциям, будет ещё один сет апи

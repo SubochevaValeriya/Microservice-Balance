@@ -51,8 +51,15 @@ func (h *Handler) changeUsersBalances(c *gin.Context) {
 }
 
 func (h *Handler) deleteAllUsersBalances(c *gin.Context) {
-	// DELETE
+	err := h.services.Balance.DeleteAllUsersBalances()
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
 
+	c.JSON(http.StatusOK, statusResponse{
+		Status: "ok",
+	})
 }
 
 func (h *Handler) getBalanceByID(c *gin.Context) {
@@ -78,9 +85,26 @@ func (h *Handler) getBalanceByID(c *gin.Context) {
 
 func (h *Handler) changeBalanceByID(c *gin.Context) {
 	//UPDATE
+	userId, err := strconv.Atoi(c.Param("id"))
+	var input microservice.Transactions
+
+	if err := c.BindJSON(&input); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	id, err := h.services.Balance.ChangeBalanceById(userId, input)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, map[string]int{
+		"id": id,
+	})
 }
 
-func (h *Handler) deleteByID(c *gin.Context) {
+func (h *Handler) deleteUsersByID(c *gin.Context) {
 	//DELETE
 	userId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

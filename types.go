@@ -12,9 +12,9 @@ type UsersBalances struct {
 
 type Transactions struct {
 	Id         int
-	UserId     int       `json:"userId" binding:"required"`
+	UserId     int       `json:"userId" `
 	Amount     int       `json:"amount" binding:"required"`
-	Reason     string    `json:"reason" binding:"required"`
+	Reason     string    `json:"reason" `
 	TransferId int       `json:"transferId"`
 	Date       time.Time `json:"transaction_date"`
 }
