@@ -23,9 +23,9 @@ func (s *ApiService) GetAllUsersBalances() ([]microservice.UsersBalances, error)
 	return s.repo.GetAllUsersBalances()
 }
 
-func (s *ApiService) GetBalanceById(userId int) (microservice.UsersBalances, error) {
+func (s *ApiService) GetBalanceById(userId int, ccy string) (microservice.UsersBalances, error) {
 
-	return s.repo.GetBalanceById(userId)
+	return s.repo.GetBalanceById(userId, ccy)
 }
 
 func (s *ApiService) DeleteUserById(userId int) error {
@@ -38,7 +38,7 @@ func (s *ApiService) DeleteAllUsersBalances() error {
 	return s.repo.DeleteAllUsersBalances()
 }
 
-func (s *ApiService) ChangeBalanceById(userId int, transaction microservice.Transactions) (int, error) {
+func (s *ApiService) ChangeBalanceById(userId int, transaction microservice.Transactions) (microservice.Transactions, error) {
 
 	return s.repo.ChangeBalanceById(userId, transaction)
 }

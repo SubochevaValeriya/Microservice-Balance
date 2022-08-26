@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/SubochevaValeriya/microservice-balance"
 	"github.com/jmoiron/sqlx"
+	"io/ioutil"
+	"net/http"
 	"time"
 )
 
@@ -24,8 +26,6 @@ const (
 )
 
 func (r *ApiPostgres) CreateUser(user microservice.UsersBalances) (int, error) {
-	// пользователь мне даёт balance и всё (в будущем валюту), соотв я по умолчанию проставляю
-	// ризон и амаунт, мне даже это не нужно от него
 	tx, err := r.db.Beginx()
 	if err != nil {
 		return 0, err
@@ -61,15 +61,44 @@ func (r *ApiPostgres) GetAllUsersBalances() ([]microservice.UsersBalances, error
 	return usersBalances, err
 }
 
-func (r *ApiPostgres) GetBalanceById(userId int) (microservice.UsersBalances, error) {
-	var list microservice.UsersBalances
-	query := fmt.Sprintf("SELECT * FROM %s WHERE id = $1", usersTable)
-	err := r.db.Get(&list, query, userId)
-	//if err := row.Scan(&id); err != nil {
-	//	return 0, err
-	//}
+func (r *ApiPostgres) GetBalanceById(userId int, ccy string) (microservice.UsersBalances, error) {
+	// https://apilayer.com/marketplace/exchangerates_data-api?preview=true#documentation-tab
+	var row microservice.UsersBalances
+	var balance int
+	getBalanceQuery := fmt.Sprintf("SELECT (balance) FROM %s WHERE id=$1", usersTable)
+	err := r.db.Get(&balance, getBalanceQuery, userId)
+	if err != nil {
+		return row, err
+	}
 
-	return list, err
+	if ccy != "" {
+
+	} else {
+		url := "https://api.apilayer.com/exchangerates_data/convert?to={to}&from={from}&amount={amount}"
+
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", url, nil)
+		req.Header.Set("apikey", "4EIJgz5GX9n5N8QUdRXHwQE01DfqGSqs")
+
+		if err != nil {
+			fmt.Println(err)
+		}
+		res, err := client.Do(req)
+		if res.Body != nil {
+			defer res.Body.Close()
+		}
+		body, err := ioutil.ReadAll(res.Body)
+
+		fmt.Println(string(body))
+
+		json.Unmarshal(responseData, &responseObject)
+	}
+
+	query := fmt.Sprintf("SELECT * FROM %s WHERE id = $1", usersTable)
+
+	err := r.db.Get(&row, query, userId)
+
+	return row, err
 }
 
 func (r *ApiPostgres) DeleteUserById(userId int) error {
@@ -116,48 +145,53 @@ func (r *ApiPostgres) DeleteAllUsersBalances() error {
 	return tx.Commit()
 }
 
-func (r *ApiPostgres) ChangeBalanceById(userId int, transaction microservice.Transactions) (int, error) {
-	// проверка на баланс (>0) - после транзакции, >0 и <0 - amount - из этого выбираем ризон
-	tx, err := r.db.Beginx()
-	if err != nil {
-		return 0, err
-	}
-	var id, balance int
+func (r *ApiPostgres) ChangeBalanceById(userId int, transaction microservice.Transactions) (microservice.Transactions, error) {
+	var balance, transactionId int
 	var reason string
+	var row microservice.Transactions
 
 	if transaction.Amount == 0 {
-		return 0, errors.New("empty transaction amount")
+		return row, errors.New("empty transaction amount")
 	}
-
 	getBalanceQuery := fmt.Sprintf("SELECT (balance) FROM %s WHERE id=$1", usersTable)
-	err = r.db.Get(&balance, getBalanceQuery, userId)
+	err := r.db.Get(&balance, getBalanceQuery, userId)
 	if err != nil {
-		return 0, err
+		return row, err
 	}
 
 	if transaction.Amount > 0 {
 		reason = ReasonReplenishment
 	} else {
 		if balance+transaction.Amount < 0 {
-			return 0, errors.New("balance can't be negative")
+			return row, errors.New("balance can't be negative")
 		}
 
 		reason = ReasonWithdrawal
 	}
 
-	changeBalanceQuery := fmt.Sprintf("UPDATE %s SET balance=$1 WHERE id=$2", usersTable)
-	row := r.db.QueryRow(changeBalanceQuery, transaction.Amount+balance, userId)
-	if err := row.Scan(&id); err != nil {
-		tx.Rollback()
-		return 0, err
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return row, err
 	}
-
-	addTransactionQuery := fmt.Sprintf("INSERT INTO %s (user_id, amount, reason, transaction_date) values ($1, $2, $3, $4)", transactionTable)
-	_, err = tx.Exec(addTransactionQuery, userId, transaction.Amount, reason, time.Now())
+	changeBalanceQuery := fmt.Sprintf("UPDATE %s SET balance=$1 WHERE id=$2", usersTable)
+	_, err = tx.Exec(changeBalanceQuery, transaction.Amount+balance, userId)
 	if err != nil {
 		tx.Rollback()
-		return 0, err
+		return row, err
 	}
 
-	return userId, tx.Commit()
+	addTransactionQuery := fmt.Sprintf("INSERT INTO %s (user_id, amount, reason, transaction_date) values ($1, $2, $3, $4) RETURNING id", transactionTable)
+	rowInserted := r.db.QueryRow(addTransactionQuery, userId, transaction.Amount, reason, time.Now())
+	if err := rowInserted.Scan(&transactionId); err != nil {
+		tx.Rollback()
+		return row, err
+	}
+
+	query := fmt.Sprintf("SELECT * FROM %s WHERE id = $1", transactionTable)
+	err = r.db.Get(&row, query, transactionId)
+	if err != nil {
+		return row, err
+	}
+
+	return row, tx.Commit()
 }

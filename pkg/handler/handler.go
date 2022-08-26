@@ -22,7 +22,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		api.GET("/", h.getAllUsersBalances) //done
 		api.PUT("/", h.changeUsersBalances)
 		api.DELETE("/", h.deleteAllUsersBalances)
-		api.GET("/:id", h.getBalanceByID) //done
+		api.GET("/:id?currency=ccy", h.getBalanceByID) //done
 		api.PUT("/:id", h.changeBalanceByID)
 		api.DELETE("/:id", h.deleteUsersByID) //done
 	}

@@ -11,7 +11,7 @@ type Balance interface {
 	GetBalanceById(userId int) (microservice.UsersBalances, error)
 	DeleteUserById(userId int) error
 	DeleteAllUsersBalances() error
-	ChangeBalanceById(userId int, transaction microservice.Transactions) (int, error)
+	ChangeBalanceById(userId int, transaction microservice.Transactions) (microservice.Transactions, error)
 }
 
 type Repository struct {

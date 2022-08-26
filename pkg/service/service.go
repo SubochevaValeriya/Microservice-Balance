@@ -8,10 +8,10 @@ import (
 type Balance interface {
 	CreateUser(user microservice.UsersBalances) (int, error)
 	GetAllUsersBalances() ([]microservice.UsersBalances, error)
-	GetBalanceById(userId int) (microservice.UsersBalances, error)
+	GetBalanceById(userId int, ccy string) (microservice.UsersBalances, error)
 	DeleteUserById(userId int) error
 	DeleteAllUsersBalances() error
-	ChangeBalanceById(userId int, transaction microservice.Transactions) (int, error)
+	ChangeBalanceById(userId int, transaction microservice.Transactions) (microservice.Transactions, error)
 }
 
 type Service struct {

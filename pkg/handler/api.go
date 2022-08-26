@@ -63,18 +63,14 @@ func (h *Handler) deleteAllUsersBalances(c *gin.Context) {
 }
 
 func (h *Handler) getBalanceByID(c *gin.Context) {
-	// SELECT
-	//userId, err := getUserId(c)
-	//if err != nil {
-	//	return
-	//}
-
 	userId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
 	}
 
-	list, err := h.services.Balance.GetBalanceById(userId)
+	ccy := c.Param("ccy")
+
+	list, err := h.services.Balance.GetBalanceById(userId, ccy)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -86,22 +82,24 @@ func (h *Handler) getBalanceByID(c *gin.Context) {
 func (h *Handler) changeBalanceByID(c *gin.Context) {
 	//UPDATE
 	userId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
+	}
+
 	var input microservice.Transactions
 
-	if err := c.BindJSON(&input); err != nil {
+	if err = c.BindJSON(&input); err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	id, err := h.services.Balance.ChangeBalanceById(userId, input)
+	row, err := h.services.Balance.ChangeBalanceById(userId, input)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, map[string]int{
-		"id": id,
-	})
+	c.JSON(http.StatusOK, row)
 }
 
 func (h *Handler) deleteUsersByID(c *gin.Context) {

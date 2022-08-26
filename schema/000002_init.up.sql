@@ -11,5 +11,6 @@ CREATE TABLE transactions
     user_id int references users_balances(id) not null,
     amount int not null,
     reason varchar(255),
+    transfer_id int references users_balances(id) not null,
     transaction_date date not null
 );
