@@ -63,6 +63,7 @@ func (h *Handler) deleteAllUsersBalances(c *gin.Context) {
 }
 
 func (h *Handler) getBalanceByID(c *gin.Context) {
+	//READ
 	userId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, "invalid id param")

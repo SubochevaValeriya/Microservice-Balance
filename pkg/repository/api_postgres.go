@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/SubochevaValeriya/microservice-balance"
 	"github.com/jmoiron/sqlx"
-	"io/ioutil"
-	"net/http"
 	"time"
 )
 
@@ -61,7 +59,7 @@ func (r *ApiPostgres) GetAllUsersBalances() ([]microservice.UsersBalances, error
 	return usersBalances, err
 }
 
-func (r *ApiPostgres) GetBalanceById(userId int, ccy string) (microservice.UsersBalances, error) {
+func (r *ApiPostgres) GetBalanceById(userId int) (microservice.UsersBalances, error) {
 	// https://apilayer.com/marketplace/exchangerates_data-api?preview=true#documentation-tab
 	var row microservice.UsersBalances
 	var balance int
@@ -71,32 +69,9 @@ func (r *ApiPostgres) GetBalanceById(userId int, ccy string) (microservice.Users
 		return row, err
 	}
 
-	if ccy != "" {
-
-	} else {
-		url := "https://api.apilayer.com/exchangerates_data/convert?to={to}&from={from}&amount={amount}"
-
-		client := &http.Client{}
-		req, err := http.NewRequest("GET", url, nil)
-		req.Header.Set("apikey", "4EIJgz5GX9n5N8QUdRXHwQE01DfqGSqs")
-
-		if err != nil {
-			fmt.Println(err)
-		}
-		res, err := client.Do(req)
-		if res.Body != nil {
-			defer res.Body.Close()
-		}
-		body, err := ioutil.ReadAll(res.Body)
-
-		fmt.Println(string(body))
-
-		json.Unmarshal(responseData, &responseObject)
-	}
-
 	query := fmt.Sprintf("SELECT * FROM %s WHERE id = $1", usersTable)
 
-	err := r.db.Get(&row, query, userId)
+	err = r.db.Get(&row, query, userId)
 
 	return row, err
 }
