@@ -7,8 +7,9 @@ import (
 	"strconv"
 )
 
+// createUser is made for first input of user's transaction
+// It's CREATE in CRUD
 func (h *Handler) createUser(c *gin.Context) {
-	//INSERT
 	var input microservice.UsersBalances
 
 	if err := c.BindJSON(&input); err != nil {
@@ -31,8 +32,9 @@ type getAllUsersBalancesResponse struct {
 	Data []microservice.UsersBalances `json:"data"`
 }
 
+// getAllUsersBalances is used to get information of balances of all users
+// It's READ from CRUD
 func (h *Handler) getAllUsersBalances(c *gin.Context) {
-	// SELECT * FROM UsersBalances
 
 	usersBalances, err := h.services.Balance.GetAllUsersBalances()
 	if err != nil {
@@ -62,15 +64,17 @@ func (h *Handler) deleteAllUsersBalances(c *gin.Context) {
 	})
 }
 
+// getBalanceByID allows to get balance of specific user and convert in determined currency (if entered)
+// It's READ from CRUD
 func (h *Handler) getBalanceByID(c *gin.Context) {
 	//READ
-	userId, err := strconv.Atoi(c.Param("id"))
+	userId, err := strconv.Atoi(c.Query("id"))
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
+		return
 	}
 
-	ccy := c.Param("ccy")
-
+	ccy := c.Query("currency")
 	list, err := h.services.Balance.GetBalanceById(userId, ccy)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
@@ -85,6 +89,7 @@ func (h *Handler) changeBalanceByID(c *gin.Context) {
 	userId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
+		return
 	}
 
 	var input microservice.Transactions
@@ -108,6 +113,7 @@ func (h *Handler) deleteUsersByID(c *gin.Context) {
 	userId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
+		return
 	}
 
 	err = h.services.Balance.DeleteUserById(userId)
