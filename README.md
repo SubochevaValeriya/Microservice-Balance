@@ -33,7 +33,7 @@ Body:
 
 ```/api/id?id=id&currency=CCY``` - GET USER BALANCE
 
-*you can specify currency in which data will be reflected (on current rate) *
+*you can specify currency in which data will be reflected (on current rate)*
 
 ```/transactions/id?id=id&currency=CCY``` - GET USER'S LIST OF TRANSACTIONS
 
