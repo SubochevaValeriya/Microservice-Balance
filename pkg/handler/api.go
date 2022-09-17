@@ -47,9 +47,21 @@ func (h *Handler) getAllUsersBalances(c *gin.Context) {
 	})
 }
 
+// UPDATE
 func (h *Handler) changeUsersBalances(c *gin.Context) {
-	//UPDATE
-	//userId, err := c.Get()
+	var input microservice.Transactions
+
+	if err := c.BindJSON(&input); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	row, err := h.services.Balance.ChangeBalances(input)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, row)
 }
 
 func (h *Handler) deleteAllUsersBalances(c *gin.Context) {
@@ -67,7 +79,6 @@ func (h *Handler) deleteAllUsersBalances(c *gin.Context) {
 // getBalanceByID allows to get balance of specific user and convert in determined currency (if entered)
 // It's READ from CRUD
 func (h *Handler) getBalanceByID(c *gin.Context) {
-	//READ
 	userId, err := strconv.Atoi(c.Query("id"))
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
@@ -84,8 +95,9 @@ func (h *Handler) getBalanceByID(c *gin.Context) {
 	c.JSON(http.StatusOK, list)
 }
 
+// changeBalanceByID used for changing balance of user (adding transaction)
+// It's UPDATE from CRUD
 func (h *Handler) changeBalanceByID(c *gin.Context) {
-	//UPDATE
 	userId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
@@ -108,8 +120,9 @@ func (h *Handler) changeBalanceByID(c *gin.Context) {
 	c.JSON(http.StatusOK, row)
 }
 
+// deleteUsersByID allows to delete user and all his transactions
+// It's DELETE from CRUD
 func (h *Handler) deleteUsersByID(c *gin.Context) {
-	//DELETE
 	userId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
@@ -127,16 +140,27 @@ func (h *Handler) deleteUsersByID(c *gin.Context) {
 	})
 }
 
-//func getUserId(c *gin.Context) (int, error) {
-//	id, ok := c.Get("userId")
-//	if !ok {
-//		return 0, errors.New("user id not found")
-//	}
-//
-//	idInt, ok := id.(int)
-//	if !ok {
-//		return 0, errors.New("user id is of invalid type")
-//	}
-//
-//	return idInt, nil
-//}
+type getTransactionsByIDResponse struct {
+	Data []microservice.Transactions `json:"data"`
+}
+
+// getTransactionsByID allows to get list of transactions of specific user and convert it in determined currency (if entered)
+// It's READ from CRUD
+func (h *Handler) getTransactionsByID(c *gin.Context) {
+	userId, err := strconv.Atoi(c.Query("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
+		return
+	}
+
+	ccy := c.Query("currency")
+	transactions, err := h.services.Balance.GetTransactionsById(userId, ccy)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, getTransactionsByIDResponse{
+		Data: transactions,
+	})
+}

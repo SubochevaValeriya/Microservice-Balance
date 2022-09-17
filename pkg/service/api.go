@@ -54,3 +54,28 @@ func (s *ApiService) ChangeBalanceById(userId int, transaction microservice.Tran
 
 	return s.repo.ChangeBalanceById(userId, transaction)
 }
+
+func (s *ApiService) ChangeBalances(transaction microservice.Transactions) (microservice.Transactions, error) {
+
+	return s.repo.ChangeBalances(transaction)
+}
+
+func (s *ApiService) GetTransactionsById(userId int, ccy string) ([]microservice.Transactions, error) {
+	transactions, err := s.repo.GetTransactionsById(userId)
+	if err != nil {
+		return transactions, err
+	}
+
+	if ccy != "" {
+		for i := range transactions {
+			transactions[i].Amount, err = convertToCCY(ccy, transactions[i].Amount)
+			fmt.Println(transactions[i].Amount)
+		}
+
+		if err != nil {
+			return transactions, fmt.Errorf("can't convert balance to inputted CCY: %w", err)
+		}
+	}
+
+	return transactions, err
+}

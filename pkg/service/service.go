@@ -11,7 +11,9 @@ type Balance interface {
 	GetBalanceById(userId int, ccy string) (microservice.UsersBalances, error)
 	DeleteUserById(userId int) error
 	DeleteAllUsersBalances() error
+	ChangeBalances(transaction microservice.Transactions) (microservice.Transactions, error)
 	ChangeBalanceById(userId int, transaction microservice.Transactions) (microservice.Transactions, error)
+	GetTransactionsById(userId int, ccy string) ([]microservice.Transactions, error)
 }
 
 type Service struct {

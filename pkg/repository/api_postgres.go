@@ -40,8 +40,8 @@ func (r *ApiPostgres) CreateUser(user microservice.UsersBalances) (int, error) {
 		return 0, err
 	}
 
-	addTransactionQuery := fmt.Sprintf("INSERT INTO %s (user_id, amount, reason, transaction_date) values ($1, $2, $3, $4)", transactionTable)
-	_, err = tx.Exec(addTransactionQuery, id, user.Balance, ReasonOpening, time.Now())
+	addTransactionQuery := fmt.Sprintf("INSERT INTO %s (user_id, amount, reason, transaction_date, transfer_id) values ($1, $2, $3, $4, $5)", transactionTable)
+	_, err = tx.Exec(addTransactionQuery, id, user.Balance, ReasonOpening, time.Now(), id)
 	if err != nil {
 		tx.Rollback()
 		return 0, err
@@ -60,7 +60,6 @@ func (r *ApiPostgres) GetAllUsersBalances() ([]microservice.UsersBalances, error
 }
 
 func (r *ApiPostgres) GetBalanceById(userId int) (microservice.UsersBalances, error) {
-	// https://apilayer.com/marketplace/exchangerates_data-api?preview=true#documentation-tab
 	var row microservice.UsersBalances
 	var balance int
 	getBalanceQuery := fmt.Sprintf("SELECT (balance) FROM %s WHERE id=$1", usersTable)
@@ -155,8 +154,8 @@ func (r *ApiPostgres) ChangeBalanceById(userId int, transaction microservice.Tra
 		return row, err
 	}
 
-	addTransactionQuery := fmt.Sprintf("INSERT INTO %s (user_id, amount, reason, transaction_date) values ($1, $2, $3, $4) RETURNING id", transactionTable)
-	rowInserted := r.db.QueryRow(addTransactionQuery, userId, transaction.Amount, reason, time.Now())
+	addTransactionQuery := fmt.Sprintf("INSERT INTO %s (user_id, amount, reason, transaction_date, transfer_id) values ($1, $2, $3, $4, $5) RETURNING id", transactionTable)
+	rowInserted := r.db.QueryRow(addTransactionQuery, userId, transaction.Amount, reason, time.Now(), userId)
 	if err := rowInserted.Scan(&transactionId); err != nil {
 		tx.Rollback()
 		return row, err
@@ -169,4 +168,93 @@ func (r *ApiPostgres) ChangeBalanceById(userId int, transaction microservice.Tra
 	}
 
 	return row, tx.Commit()
+}
+
+func (r *ApiPostgres) ChangeBalances(transaction microservice.Transactions) (microservice.Transactions, error) {
+	reason := ReasonTransfer
+	var row microservice.Transactions
+
+	if transaction.Amount == 0 {
+		return row, errors.New("empty transaction amount")
+	}
+
+	if transaction.Amount < 0 {
+		return row, errors.New("transaction amount should be positive")
+	}
+
+	balanceSender, err := r.GetBalanceAndCheck(transaction.UserId, -transaction.Amount)
+	if err != nil {
+		return row, err
+	}
+
+	balanceReceiver, err := r.GetBalanceAndCheck(transaction.UserId, transaction.Amount)
+	if err != nil {
+		return row, err
+	}
+
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return row, err
+	}
+
+	transactionId, err := r.UpdateBalanceAndInsertTransaction(tx, transaction.UserId, balanceSender-transaction.Amount, -transaction.Amount, transaction.TransferId, reason)
+	if err != nil {
+		return row, err
+		tx.Rollback()
+	}
+	_, err = r.UpdateBalanceAndInsertTransaction(tx, transaction.TransferId, balanceReceiver+transaction.Amount, transaction.Amount, transaction.UserId, reason)
+	if err != nil {
+		return row, err
+		tx.Rollback()
+	}
+
+	query := fmt.Sprintf("SELECT * FROM %s WHERE id = $1", transactionTable)
+	err = r.db.Get(&row, query, transactionId)
+	if err != nil {
+		return row, err
+	}
+
+	return row, tx.Commit()
+}
+
+func (r *ApiPostgres) GetTransactionsById(userId int) ([]microservice.Transactions, error) {
+	var transactions []microservice.Transactions
+
+	query := fmt.Sprintf("SELECT * FROM %s WHERE user_id=$1", transactionTable)
+	err := r.db.Select(&transactions, query, userId)
+
+	return transactions, err
+}
+
+func (r *ApiPostgres) GetBalanceAndCheck(userId, amount int) (int, error) {
+
+	balance, err := r.GetBalanceById(userId)
+	if err != nil {
+		return 0, fmt.Errorf("user not found in the system: %w", err)
+	}
+
+	if balance.Balance+amount < 0 {
+		return 0, errors.New("balance can't be negative")
+	}
+
+	return balance.Balance, nil
+}
+
+func (r *ApiPostgres) UpdateBalanceAndInsertTransaction(tx *sqlx.Tx, userId, balance, amount, transferId int, reason string) (int, error) {
+
+	var transactionId int
+
+	changeBalanceQuery := fmt.Sprintf("UPDATE %s SET balance=$1 WHERE id=$2", usersTable)
+	_, err := tx.Exec(changeBalanceQuery, balance, userId)
+	if err != nil {
+		return 0, err
+	}
+
+	addTransactionQuery := fmt.Sprintf("INSERT INTO %s (user_id, amount, reason, transaction_date, transfer_id) values ($1, $2, $3, $4, $5) RETURNING id", transactionTable)
+	rowInserted := r.db.QueryRow(addTransactionQuery, userId, amount, reason, time.Now(), transferId)
+	if err = rowInserted.Scan(&transactionId); err != nil {
+		return 0, err
+	}
+
+	return transactionId, nil
 }
