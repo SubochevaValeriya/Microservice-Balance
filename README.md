@@ -2,21 +2,27 @@
 
 ### POST:
 
-```/api/``` - CREATE USER BALANCE (Reason: Opening)
+```/api/``` - CREATE USER BALANCE 
+
+*(Reason: Opening)*
 
 Body:
 {"balance": }
 
 ### PUT:
 
-```/api/``` - UPDATE USERS BALANCES: CREATE NEW TRANSACTION (Reason: Transfer from one user to another)
+```/api/``` - UPDATE USERS BALANCES: CREATE NEW TRANSACTION 
+
+*(Reason: Transfer from one user to another)*
 
 Body:
 {"userId":,
 "Amount":",
 "TransferId:}
 
-```/api/:id``` - UPDATE USER BALANCE BY ID: CREATE NEW TRANSACTION (Reason: Replenishment or Withdrawal depending on the amount)
+```/api/:id``` - UPDATE USER BALANCE BY ID: CREATE NEW TRANSACTION 
+
+*(Reason: Replenishment or Withdrawal depending on the amount)*
 
 Body:
 {"Amount":"}
@@ -25,13 +31,17 @@ Body:
 
 ```/api/``` - GET ALL USERS BALANCES
 
-```/api/id?id=id&currency=CCY``` - GET USER BALANCE, you can specify currency in which data will be reflected (on current rate)
+```/api/id?id=id&currency=CCY``` - GET USER BALANCE
 
-```/transactions/id?id=id&currency=CCY``` - GET USER'S LIST OF TRANSACTIONS, you can specify currency in which data will be reflected (on current rate)
+*you can specify currency in which data will be reflected (on current rate)*
+
+```/transactions/id?id=id&currency=CCY``` - GET USER'S LIST OF TRANSACTIONS
+
+*you can specify currency in which data will be reflected (on current rate)*
 
 ### DELETE:
 
-```/api/:id``` - DELETE USER BALANCE BY ID (and all transactions of this user)
+```/api/:id``` - DELETE USER BALANCE BY ID *(and all transactions of this user)*
 
 When the balance changes, a validation is performed, if the balance becomes less than zero, the transaction is canceled.
 
